@@ -5,15 +5,21 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:host": "vite --host",
+    "yjs": "HOST=0.0.0.0 PORT=1234 npx y-websocket",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview"
   },
   "dependencies": {
     "konva": "^10.2.5",
+    "lucide-react": "^1.8.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
-    "react-konva": "^19.2.3"
+    "react-konva": "^19.2.3",
+    "y-websocket": "^1.5.0",
+    "yjs": "^13.6.30",
+    "zustand": "^5.0.12"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",

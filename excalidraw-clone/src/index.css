@@ -1,0 +1,48 @@
+/* src/index.css */
+
+/* 1. PREMIUM DARK MODE DESIGN TOKENS */
+:root {
+  /* Canvas Background - A very dark elegant gray */
+  --canvas-bg: #121212;
+  
+  /* The color of the dot grid we will add later */
+  --grid-dots: rgba(255, 255, 255, 0.05);
+
+  /* Glassmorphic UI colors */
+  --ui-surface: rgba(30, 30, 30, 0.65);
+  --ui-border: rgba(255, 255, 255, 0.08);
+  
+  /* Accent color (For active tools / glowing states) - Excalidraw Purple */
+  --accent-color: #a48cfa;
+  --accent-glow: rgba(164, 140, 250, 0.2);
+
+  /* Typography */
+  --text-primary: #f0f0f0;
+  --text-secondary: #a0a0a0;
+}
+
+/* 2. GLOBAL RESET */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+
+  /* 3. FULL PAGE CANVAS LOCK */
+html, body, #root {
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden; 
+  background-color: var(--canvas-bg);
+  /* --- ADD THESE TWO LINES BELOW --- */
+  background-image: radial-gradient(var(--grid-dots) 1px, transparent 1px);
+  background-size: 20px 20px;
+  /* --------------------------------- */
+
+  color: var(--text-primary);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  user-select: none; 
+}
+
+

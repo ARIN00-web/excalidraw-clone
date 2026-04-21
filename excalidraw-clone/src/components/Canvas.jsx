@@ -1,7 +1,8 @@
 import {Stage,Layer, Rect} from 'react-konva';
-
-function Canvas({shapes, setShapes, tool, color}){
-
+import useStore from '../store';
+function Canvas(){
+    const {shapes, tool, color,selectedShape,setSelectedShape,updateShapes} = useStore();
+   
     const handleMouseDown = (e) => {
         if(tool != "rect") return;
 
@@ -14,7 +15,7 @@ function Canvas({shapes, setShapes, tool, color}){
             fill: color,
             id: Date.now().toString(),
         };
-        setShapes([...shapes, newRect]);
+        updateShapes([...shapes, newRect]);
     };
 
     return(
@@ -22,6 +23,7 @@ function Canvas({shapes, setShapes, tool, color}){
         width={window.innerWidth}
         height={window.innerHeight}
         onMouseDown={handleMouseDown}
+        style={{cursor: tool === "select" ? "default" : "crosshair"}}
         >
             <Layer>
                 {shapes.map((shape) => (
@@ -31,7 +33,8 @@ function Canvas({shapes, setShapes, tool, color}){
                         y={shape.y}
                         width={shape.width}
                         height={shape.height}
-                        stroke="black"
+                        stroke={selectedShape === shape.id ? "blue" : "black"}
+
                         fill={shape.fill}
                         draggable={tool === "select"}
                         onDragEnd={(e) =>{
@@ -39,10 +42,17 @@ function Canvas({shapes, setShapes, tool, color}){
                                 s.id === shape.id
                                 ?{...s, x: e.target.x(), y: e.target.y()}
                                 :s
+                               
                             );
-                        setShapes(updatedShapes);
+                        
+                        updateShapes(updatedShapes);
                                 
                         }}
+                             onClick = {(e)=> {
+                                    if(tool === "select"){
+                                        setSelectedShape(shape.id);
+                                    }
+                                }}
                     
                         //fill={shape.fill}
                     />

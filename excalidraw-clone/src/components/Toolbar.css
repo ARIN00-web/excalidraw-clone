@@ -1,0 +1,60 @@
+/* src/components/Toolbar.css */
+
+.toolbar {
+  /* 1. Make it float in the top center */
+  position: absolute;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100; /* Stays above the canvas */
+
+  /* 2. Glassmorphic Frosted Glass Effect */
+  background: var(--ui-surface);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px); /* Safari support */
+  
+  /* 3. Shape and Drop Shadow */
+  border: 1px solid var(--ui-border);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  
+  /* 4. Flexbox to align our buttons in a row */
+  display: flex;
+  gap: 8px;
+  padding: 8px;
+}
+
+.tool-btn {
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 10px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.tool-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+  transform: translateY(-1px); /* Slight lift on hover! */
+}
+
+/* When a tool is currently selected */
+.tool-btn.active {
+  background: var(--accent-glow);
+  color: var(--accent-color);
+  box-shadow: inset 0 0 0 1px var(--accent-color);
+}
+
+/* Beautiful color swatches */
+.color-swatch {
+  width: 18px; 
+  height: 18px; 
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.2);
+}
+
