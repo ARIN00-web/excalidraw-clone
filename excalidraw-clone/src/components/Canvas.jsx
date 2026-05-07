@@ -1,24 +1,66 @@
-import { Stage, Layer, Rect, Ellipse, Line } from 'react-konva';
+import { Stage, Layer, Rect, Ellipse, Line ,Text} from 'react-konva';
 import useStore from '../store';
 import React, { useRef, useEffect } from 'react';
 function Canvas() {
-    const { shapes, tool, color,strokeWidth, canvasBackground, selectedShape, setSelectedShape, updateShapes } = useStore();
+    const { shapes, tool, color,strokeWidth, canvasBackground, selectedShape, setSelectedShape, updateShapes ,setTool} = useStore();
     
     // We use a ref to track if the mouse is held down without causing useless re-renders
     const isDrawing = useRef(false);
+    const stageRef = useRef(null);
+
     
     // This magically updates the CSS variable we defined in index.css!
     useEffect(() => {
     document.documentElement.style.setProperty('--canvas-bg', canvasBackground);
     }, [canvasBackground]);
+       
+        useEffect(() => {
+        const handleExport = () => {
+            // Konva magically converts the canvas to an image string!
+            const uri = stageRef.current.toDataURL();
+            
+            // Create an invisible HTML link to force a download
+            const link = document.createElement("a");
+            link.download = "excalidraw-masterpiece.png";
+            link.href = uri;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        };
+
+        window.addEventListener("export-canvas", handleExport);
+        return () => window.removeEventListener("export-canvas", handleExport);
+    }, []);
+
+
 
 
     const handleMouseDown = (e) => {
         // If we click while in select mode, we don't want to draw a shape!
-        if (tool === "select") return;
+        if (tool === "select" || tool === "eraser") return;
+
+         // 👇 MOVED THIS LINE UP SO `pos` IS READY TO BE USED 👇
+        const pos = e.target.getStage().getPointerPosition();
+                if (tool === "text") {
+            const textValue = prompt("What do you want to type?");
+            if (textValue) {
+                const newShape = {
+                    id: Date.now().toString(),
+                    type: "text",
+                    x: pos.x,
+                    y: pos.y,
+                    text: textValue,
+                    fill: color,
+                };
+                updateShapes([...shapes, newShape]);
+            }
+            // Switch back to select mode so you can immediately drag your new text!
+            setTool("select");
+            return;
+        }
 
         isDrawing.current = true;
-        const pos = e.target.getStage().getPointerPosition();
+     
 
         // Inject the invisible "seed" shape
         const newShape = {
@@ -67,6 +109,9 @@ function Canvas() {
 
     return (
         <Stage
+            ref={stageRef}
+
+
             width={window.innerWidth}
             height={window.innerHeight}
             onMouseDown={handleMouseDown}
@@ -77,7 +122,19 @@ function Canvas() {
             style={{ cursor: tool === "select" ? "default" : "crosshair" }}
         >
             <Layer>
-                                {shapes.map((shape) => {
+
+                    {/* Add this rectangle first to act as a solid background for image exports! */}
+                <Rect
+                    x={0}
+                    y={0}
+                    width={window.innerWidth}
+                    height={window.innerHeight}
+                    fill={canvasBackground}
+                    listening={false} // Prevents us from accidentally selecting or interacting with it
+                />
+
+                
+                    {shapes.map((shape) => {
                     const isSelected = selectedShape === shape.id;
                     const strokeColor = isSelected ? "#a48cfa" : shape.stroke;
                     const isDraggable = tool === "select";
@@ -85,6 +142,10 @@ function Canvas() {
                     const handleSelect = () => {
                         if (tool === "select") setSelectedShape(shape.id);
                     };
+                                        const deleteThisShape = () => {
+                        updateShapes(shapes.filter((s) => s.id !== shape.id));
+                    };
+
 
                     if (shape.type === "rect") {
                         return (
@@ -98,7 +159,17 @@ function Canvas() {
                                 strokeWidth={shape.strokeWidth || 2}
                                 fill={shape.fill}
                                 draggable={isDraggable}
-                                onClick={handleSelect}
+                                                                onClick={() => {
+                                    if (tool === "eraser") deleteThisShape();
+                                    else handleSelect();
+                                }}
+                                onMouseEnter={(e) => {
+                                    // e.evt.buttons === 1 means the left mouse button is held down
+                                    if (tool === "eraser" && e.evt.buttons === 1) {
+                                        deleteThisShape();
+                                    }
+                                }}
+
                                 onDragEnd={(e) => {
                                     const updatedShapes = shapes.map((s) =>
                                         s.id === shape.id ? { ...s, x: e.target.x(), y: e.target.y() } : s
@@ -119,12 +190,55 @@ function Canvas() {
                                 strokeWidth={shape.strokeWidth || 2}
                                 fill={shape.fill}
                                 draggable={isDraggable}
-                                onClick={handleSelect}
+                                                                onClick={() => {
+                                    if (tool === "eraser") deleteThisShape();
+                                    else handleSelect();
+                                }}
+                                onMouseEnter={(e) => {
+                                    // e.evt.buttons === 1 means the left mouse button is held down
+                                    if (tool === "eraser" && e.evt.buttons === 1) {
+                                        deleteThisShape();
+                                    }
+                                }}
+
                                 onDragEnd={(e) => {
                                     const updatedShapes = shapes.map((s) =>
                                         s.id === shape.id 
                                         ? { ...s, x: e.target.x() - s.width / 2, y: e.target.y() - s.height / 2 } 
                                         : s
+                                    );
+                                    updateShapes(updatedShapes);
+                                }}
+                            />
+                        );
+                    } else if (shape.type === "rhombus") {
+                        return (
+                            <Line
+                                key={shape.id}
+                                x={shape.x}
+                                y={shape.y}
+                                // The 4 points of a diamond: [Top-X, Top-Y, Right-X, Right-Y, Bottom-X, Bottom-Y, Left-X, Left-Y]
+                                points={[
+                                    shape.width / 2, 0, // Top point
+                                    shape.width, shape.height / 2, // Right point
+                                    shape.width / 2, shape.height, // Bottom point
+                                    0, shape.height / 2 // Left point
+                                ]}
+                                closed={true} // Connect the left point back to the top point!
+                                stroke={strokeColor}
+                                strokeWidth={shape.strokeWidth || 2}
+                                fill={shape.fill}
+                                draggable={isDraggable}
+                                onClick={() => {
+                                    if (tool === "eraser") deleteThisShape();
+                                    else handleSelect();
+                                }}
+                                onMouseEnter={(e) => {
+                                    if (tool === "eraser" && e.evt.buttons === 1) deleteThisShape();
+                                }}
+                                onDragEnd={(e) => {
+                                    const updatedShapes = shapes.map((s) =>
+                                        s.id === shape.id ? { ...s, x: e.target.x(), y: e.target.y() } : s
                                     );
                                     updateShapes(updatedShapes);
                                 }}
@@ -144,7 +258,44 @@ function Canvas() {
                                 lineCap="round"
                                 lineJoin="round"
                                 draggable={isDraggable}
-                                onClick={handleSelect}
+                                                                onClick={() => {
+                                    if (tool === "eraser") deleteThisShape();
+                                    else handleSelect();
+                                }}
+                                onMouseEnter={(e) => {
+                                    // e.evt.buttons === 1 means the left mouse button is held down
+                                    if (tool === "eraser" && e.evt.buttons === 1) {
+                                        deleteThisShape();
+                                    }
+                                }}
+
+                                onDragEnd={(e) => {
+                                    const updatedShapes = shapes.map((s) =>
+                                        s.id === shape.id ? { ...s, x: e.target.x(), y: e.target.y() } : s
+                                    );
+                                    updateShapes(updatedShapes);
+                                }}
+                            />
+                        );
+                        
+                    } 
+                    else if (shape.type === "text") {
+                        return (
+                            <Text
+                                key={shape.id}
+                                x={shape.x}
+                                y={shape.y}
+                                text={shape.text}
+                                fontSize={24} // Let's give it a nice default size
+                                fill={shape.fill}
+                                draggable={isDraggable}
+                                onClick={() => {
+                                    if (tool === "eraser") deleteThisShape();
+                                    else handleSelect();
+                                }}
+                                onMouseEnter={(e) => {
+                                    if (tool === "eraser" && e.evt.buttons === 1) deleteThisShape();
+                                }}
                                 onDragEnd={(e) => {
                                     const updatedShapes = shapes.map((s) =>
                                         s.id === shape.id ? { ...s, x: e.target.x(), y: e.target.y() } : s
