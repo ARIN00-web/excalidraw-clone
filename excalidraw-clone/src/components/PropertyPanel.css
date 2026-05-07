@@ -1,0 +1,62 @@
+.property-panel {
+    position: absolute;
+    top: 50%; /* Center it vertically */
+    left: 20px; /* Put it on the left */
+    transform: translateY(-50%);
+    
+    background: var(--ui-surface);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--ui-border);
+    padding: 16px;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    z-index: 100;
+}
+.panel-label {
+    font-size: 11px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+    margin-top: 4px;
+}
+.color-picker-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+}
+.color-btn, .stroke-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.color-btn:hover, .stroke-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+.color-btn.active, .stroke-btn.active {
+    background: var(--accent-glow);
+    border: 1px solid var(--accent-color);
+}
+.color-swatch {
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+}
+.stroke-widths-row {
+    display: flex;
+    gap: 8px;
+}
+.stroke-icon {
+    background: var(--text-primary);
+    border-radius: 2px;
+}

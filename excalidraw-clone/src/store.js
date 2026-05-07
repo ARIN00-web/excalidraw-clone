@@ -30,14 +30,16 @@ const useStore = create((set, get) => {
         tool: "select",
         color: "red",
         selectedShape: null,
-
+        strokeWidth: 2, 
+        canvasBackground: "#121212", 
         // --- 2. SIMPLE SETTERS ---
         // Notice how we use set() to update exactly one property without touching the others
         setTool: (newTool) => set({ tool: newTool }),
         setShapes: (newShapes) => set({ shapes: newShapes }),
         setColor: (newColor) => set({ color: newColor }),
         setSelectedShape: (id) => set({ selectedShape: id }),
-
+        setStrokeWidth: (width) => set({ strokeWidth: width }),
+        setCanvasBackground: (bg) => set({ canvasBackground: bg }),
         // --- 3. COMPLEX LOGIC (Time Travel) ---
         undo: () => undoManager.undo(),
         redo: () => undoManager.redo(),
@@ -63,7 +65,7 @@ const useStore = create((set, get) => {
               
                 const updatedShapes = shapes.map((s) => {
                     if (s.id === selectedShape) {
-                        return { ...s, fill: newColor };
+                        return { ...s, fill: newColor, stroke: newColor };
                     }
                     return s;
                 });
