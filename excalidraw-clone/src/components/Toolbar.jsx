@@ -1,9 +1,10 @@
-import React from "react";
+import React, {useRef} from "react";
 import useStore from "../store";
 import './Toolbar.css';
-import { MousePointer2, Square, Circle as CircleIcon, Pen, Undo2, Redo2,Eraser ,Type, Download,Diamond} from 'lucide-react';
+import { MousePointer2, Square, Circle as CircleIcon, Pen, Undo2, Redo2,Eraser ,Type, Download,Diamond, ArrowUpRight ,Minus,Image as ImageIcon} from 'lucide-react';
 function Toolbar() {
     const { tool, setTool, undo, redo } = useStore();
+     const fileInputRef = useRef(null); //
     return (
         <div className="toolbar">
             <button className={`tool-btn ${tool === "select" ? "active" : ""}`} onClick={() => setTool("select")} title="Select">
@@ -24,6 +25,13 @@ function Toolbar() {
             <button className={`tool-btn ${tool === "rhombus" ? "active" : ""}`} onClick={() => setTool("rhombus")} title="Rhombus">
                 <Diamond size={20} />
             </button>
+                        <button className={`tool-btn ${tool === "arrow" ? "active" : ""}`} onClick={() => setTool("arrow")} title="Arrow">
+                <ArrowUpRight size={20} />
+            </button>
+            <button className={`tool-btn ${tool === "line" ? "active" : ""}`} onClick={() => setTool("line")} title="Straight Line">
+                <Minus size={20} />
+            </button>
+
             <button className={`tool-btn ${tool === "text" ? "active" : ""}`} onClick={() => setTool("text")} title="Text">
                 <Type size={20} />
             </button>
@@ -38,6 +46,30 @@ function Toolbar() {
             <button className="tool-btn" onClick={() => window.dispatchEvent(new Event("export-canvas"))} title="Download Image">
                 <Download size={20} />
             </button>
+                        {/* The hidden file input that actually handles the file selection */}
+            <input 
+                type="file" 
+                ref={fileInputRef} 
+                style={{ display: "none" }} 
+                accept="image/*" 
+                onChange={(e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = (event) => {
+                            // Tell the Canvas that we have a base64 string ready to drop!
+                            window.dispatchEvent(new CustomEvent("upload-image", { detail: event.target.result }));
+                        };
+                        reader.readAsDataURL(file); // This converts the image to the Base64 string
+                    }
+                    e.target.value = null; // Reset the input so you can upload the same image twice if you want
+                }} 
+            />
+            {/* The visible button that clicks the hidden input */}
+            <button className="tool-btn" onClick={() => fileInputRef.current.click()} title="Upload Image">
+                <ImageIcon size={20} />
+            </button>
+
 
         </div>
     )

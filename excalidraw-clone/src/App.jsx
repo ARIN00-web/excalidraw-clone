@@ -1,10 +1,11 @@
 import Canvas from './components/Canvas'
 import Toolbar from './components/Toolbar'
 import PropertyPanel from './components/PropertyPanel'
+import MenuBar from './components/MenuBar'
 function App() {
   return (
     <>
-      {/* Look! NO PROPS! */}
+      <MenuBar /> {/* <--- ADD COMPONENT */}{/* Look! NO PROPS! */}
       <Toolbar />
       <PropertyPanel />
       <Canvas />

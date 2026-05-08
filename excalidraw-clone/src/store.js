@@ -18,6 +18,21 @@ const provider = new WebsocketProvider(
     ydoc
 );
 
+// 👇 THIS IS THE NEW AWARENESS PROTOCOL 👇
+export const awareness = provider.awareness;
+
+// Assign a random color and name to this user when they join
+const cursorColors = ["#FF5733", "#33FF57", "#3357FF", "#F033FF", "#FFC300", "#00FFD1", "#FF0055"];
+const randomColor = cursorColors[Math.floor(Math.random() * cursorColors.length)];
+
+// Initialize this user's state
+awareness.setLocalStateField('user', {
+    name: `User ${Math.floor(Math.random() * 1000)}`,
+    color: randomColor,
+    cursor: null // They haven't moved their mouse yet!
+});
+
+
 provider.on('status', event => {
     console.log("NETWORK STATUS IS NOW: ", event.status);
 });
@@ -81,5 +96,22 @@ yShapes.observe(() => {
     console.log("MATH ENGINE FIRED! Current Shapes: ", yShapes.toJSON());
     useStore.getState().setShapes(yShapes.toJSON());
 });
+
+// Listen for other people moving their mice!
+awareness.on('change', () => {
+    const allStates = Array.from(awareness.getStates().entries());
+    const newCursors = {};
+    
+    allStates.forEach(([clientId, state]) => {
+        // Only save other people's cursors, not our own!
+        if (clientId !== awareness.clientID && state.user && state.user.cursor) {
+            newCursors[clientId] = state.user;
+        }
+    });
+    
+    useStore.getState().setCursors(newCursors);
+});
+
+
 
 export default useStore;

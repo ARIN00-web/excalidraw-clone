@@ -1,8 +1,63 @@
-import { Stage, Layer, Rect, Ellipse, Line ,Text} from 'react-konva';
-import useStore from '../store';
+import { Stage, Layer, Rect, Ellipse, Line ,Text,Arrow , Image as KonvaImage ,Transformer, Group, Path} from 'react-konva';
+import useStore, {awareness} from '../store';
 import React, { useRef, useEffect } from 'react';
+
+// Upgraded component with built-in resizing!
+const CustomImage = ({ shapeProps, isSelected, isDraggable, onSelect, onMouseEnter, onDragEnd, onTransformEnd }) => {
+    const [image, setImage] = React.useState(null);
+    const imageRef = React.useRef(null);
+    const trRef = React.useRef(null);
+
+    React.useEffect(() => {
+        const img = new window.Image();
+        img.src = shapeProps.src;
+        img.onload = () => {
+            setImage(img);
+        };
+    }, [shapeProps.src]);
+
+    // This magically attaches the resize handles when you select the image!
+    React.useEffect(() => {
+        if (isSelected && trRef.current && imageRef.current) {
+            trRef.current.nodes([imageRef.current]);
+            trRef.current.getLayer().batchDraw();
+        }
+    }, [isSelected]);
+
+    return (
+        <React.Fragment>
+            <KonvaImage
+                ref={imageRef}
+                x={shapeProps.x}
+                y={shapeProps.y}
+                scaleX={shapeProps.scaleX || 1} // Apply the scale!
+                scaleY={shapeProps.scaleY || 1}
+                rotation={shapeProps.rotation || 0} // You can even rotate it now!
+                image={image}
+                draggable={isDraggable}
+                onClick={onSelect}
+                onMouseEnter={onMouseEnter}
+                onDragEnd={onDragEnd}
+                onTransformEnd={onTransformEnd} // Save the new size when you let go
+            />
+            {isSelected && (
+                <Transformer
+                    ref={trRef}
+                    boundBoxFunc={(oldBox, newBox) => {
+                        // Don't let them shrink it until it disappears
+                        if (newBox.width < 10 || newBox.height < 10) return oldBox;
+                        return newBox;
+                    }}
+                />
+            )}
+        </React.Fragment>
+    );
+};
+
+
+
 function Canvas() {
-    const { shapes, tool, color,strokeWidth, canvasBackground, selectedShape, setSelectedShape, updateShapes ,setTool} = useStore();
+    const { shapes, tool, color,strokeWidth, canvasBackground, selectedShape, setSelectedShape, updateShapes ,setTool,cursors} = useStore();
     
     // We use a ref to track if the mouse is held down without causing useless re-renders
     const isDrawing = useRef(false);
@@ -32,6 +87,28 @@ function Canvas() {
         return () => window.removeEventListener("export-canvas", handleExport);
     }, []);
 
+          useEffect(() => {
+        const handleImageUpload = (e) => {
+            const base64Src = e.detail;
+            
+            // We use get() behind the scenes to make sure we don't grab stale data!
+            const currentStore = useStore.getState();
+            
+            const newShape = {
+                id: Date.now().toString(),
+                type: "image",
+                x: window.innerWidth / 2 - 100, // Drop it right in the middle!
+                y: window.innerHeight / 2 - 100,
+                src: base64Src,
+            };
+            
+            currentStore.updateShapes([...currentStore.shapes, newShape]);
+            currentStore.setTool("select"); // Automatically switch to the select tool so they can drag it!
+        };
+
+        window.addEventListener("upload-image", handleImageUpload);
+        return () => window.removeEventListener("upload-image", handleImageUpload);
+    }, []);
 
 
 
@@ -80,11 +157,17 @@ function Canvas() {
     };
 
     const handleMouseMove = (e) => {
-        // If we aren't holding down the mouse, do nothing
-        if (!isDrawing.current || tool === "select") return;
-
         const stage = e.target.getStage();
         const point = stage.getPointerPosition();
+
+        // 👇 BROADCAST OUR MOUSE POSITION TO THE WORLD! 👇
+        awareness.setLocalStateField('user', {
+            ...awareness.getLocalState().user,
+            cursor: { x: point.x, y: point.y }
+        });
+
+        // If we aren't holding down the mouse, do nothing
+        if (!isDrawing.current || tool === "select") return;
 
         // Copy the last shape we just injected
         let lastShape = { ...shapes[shapes.length - 1] };
@@ -122,7 +205,7 @@ function Canvas() {
             style={{ cursor: tool === "select" ? "default" : "crosshair" }}
         >
             <Layer>
-
+                    
                     {/* Add this rectangle first to act as a solid background for image exports! */}
                 <Rect
                     x={0}
@@ -132,9 +215,45 @@ function Canvas() {
                     fill={canvasBackground}
                     listening={false} // Prevents us from accidentally selecting or interacting with it
                 />
+                {/* Render other users' cursors! */}
+                {Object.keys(cursors).map(clientId => {
+                    const cursor = cursors[clientId];
+                    if (!cursor || !cursor.cursor) return null;
+                    
+                    return (
+                        <Group key={clientId} x={cursor.cursor.x} y={cursor.cursor.y}>
+                            {/* A cute little mouse pointer icon drawn with Konva Path */}
+                            <Path
+                                data="M0 0 L10 28 L15 17 L25 24 L29 20 L19 13 L28 10 Z"
+                                fill={cursor.color}
+                                stroke="white"
+                                strokeWidth={2}
+                                shadowColor="black"
+                                shadowBlur={4}
+                                shadowOpacity={0.3}
+                            />
+                            {/* The user's name badge */}
+                            <Rect
+                                x={15}
+                                y={25}
+                                width={cursor.name.length * 8 + 10}
+                                height={20}
+                                fill={cursor.color}
+                                cornerRadius={4}
+                            />
+                            <Text
+                                x={20}
+                                y={29}
+                                text={cursor.name}
+                                fill="white"
+                                fontSize={12}
+                                fontStyle="bold"
+                            />
+                        </Group>
+                    );
+                })}
 
-                
-                    {shapes.map((shape) => {
+                {shapes.map((shape) => {
                     const isSelected = selectedShape === shape.id;
                     const strokeColor = isSelected ? "#a48cfa" : shape.stroke;
                     const isDraggable = tool === "select";
@@ -299,6 +418,96 @@ function Canvas() {
                                 onDragEnd={(e) => {
                                     const updatedShapes = shapes.map((s) =>
                                         s.id === shape.id ? { ...s, x: e.target.x(), y: e.target.y() } : s
+                                    );
+                                    updateShapes(updatedShapes);
+                                }}
+                            />
+                        );
+                                            } else if (shape.type === "line") {
+                        return (
+                            <Line
+                                key={shape.id}
+                                x={shape.x}
+                                y={shape.y}
+                                // A straight line is just two points: Start (0,0) and End (width, height)
+                                points={[0, 0, shape.width, shape.height]}
+                                stroke={strokeColor}
+                                strokeWidth={shape.strokeWidth || 2}
+                                draggable={isDraggable}
+                                onClick={() => {
+                                    if (tool === "eraser") deleteThisShape();
+                                    else handleSelect();
+                                }}
+                                onMouseEnter={(e) => {
+                                    if (tool === "eraser" && e.evt.buttons === 1) deleteThisShape();
+                                }}
+                                onDragEnd={(e) => {
+                                    const updatedShapes = shapes.map((s) =>
+                                        s.id === shape.id ? { ...s, x: e.target.x(), y: e.target.y() } : s
+                                    );
+                                    updateShapes(updatedShapes);
+                                }}
+                            />
+                        );
+                    } else if (shape.type === "arrow") {
+                        return (
+                            <Arrow
+                                key={shape.id}
+                                x={shape.x}
+                                y={shape.y}
+                                // An arrow is exactly the same as a line, Konva just draws the triangle at the end for us!
+                                points={[0, 0, shape.width, shape.height]}
+                                stroke={strokeColor}
+                                fill={strokeColor} // The arrowhead needs a fill color!
+                                strokeWidth={shape.strokeWidth || 2}
+                                draggable={isDraggable}
+                                onClick={() => {
+                                    if (tool === "eraser") deleteThisShape();
+                                    else handleSelect();
+                                }}
+                                onMouseEnter={(e) => {
+                                    if (tool === "eraser" && e.evt.buttons === 1) deleteThisShape();
+                                }}
+                                onDragEnd={(e) => {
+                                    const updatedShapes = shapes.map((s) =>
+                                        s.id === shape.id ? { ...s, x: e.target.x(), y: e.target.y() } : s
+                                    );
+                                    updateShapes(updatedShapes);
+                                }}
+                            />
+                        );
+                    } else if (shape.type === "image") {
+                        return (
+                            <CustomImage
+                                key={shape.id}
+                                shapeProps={shape}
+                                isSelected={selectedShape === shape.id}
+                                isDraggable={isDraggable}
+                                onSelect={() => {
+                                    if (tool === "eraser") deleteThisShape();
+                                    else handleSelect();
+                                }}
+                                onMouseEnter={(e) => {
+                                    if (tool === "eraser" && e.evt.buttons === 1) deleteThisShape();
+                                }}
+                                onDragEnd={(e) => {
+                                    const updatedShapes = shapes.map((s) =>
+                                        s.id === shape.id ? { ...s, x: e.target.x(), y: e.target.y() } : s
+                                    );
+                                    updateShapes(updatedShapes);
+                                }}
+                                // 👇 NEW PROP TO SAVE THE RESIZING 👇
+                                onTransformEnd={(e) => {
+                                    const node = e.target;
+                                    const updatedShapes = shapes.map((s) =>
+                                        s.id === shape.id ? { 
+                                            ...s, 
+                                            x: node.x(), 
+                                            y: node.y(),
+                                            scaleX: node.scaleX(),
+                                            scaleY: node.scaleY(),
+                                            rotation: node.rotation()
+                                        } : s
                                     );
                                     updateShapes(updatedShapes);
                                 }}
