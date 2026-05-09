@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
 import useStore from '../store';
+import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/clerk-react";
 import { Menu, Trash2, Download, LogIn, Users, Sparkles } from 'lucide-react';
 import './MenuBar.css';
+import { generateShapes } from '../ai';
+
 
 function MenuBar() {
     const [isOpen, setIsOpen] = useState(false);
@@ -11,9 +14,18 @@ function MenuBar() {
         <div className="menu-bar-container">
             {/* The Upward Popping Menu */}
             <div className={`menu-dropdown ${isOpen ? "open" : ""}`}>
-                <button className="menu-item">
-                    <LogIn size={18} /> Sign In
-                </button>
+                <div className="menu-item" style={{ padding: "6px 12px" }}>
+                    <SignedOut>
+                        <SignInButton mode="modal">
+                            <button style={{background: 'transparent', border: 'none', color: 'inherit', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '12px', width: '100%', fontSize: '14px', fontWeight: '500'}}>
+                                <LogIn size={18} /> Sign In
+                            </button>
+                        </SignInButton>
+                    </SignedOut>
+                    <SignedIn>
+                        <UserButton showName={true} />
+                    </SignedIn>
+                </div>
                 <div className="menu-divider" />
                 <button className="menu-item" onClick={() => {
                     window.dispatchEvent(new Event("export-canvas"));
@@ -34,8 +46,18 @@ function MenuBar() {
                 <button className="menu-item" style={{opacity: 0.5}} title="Coming Soon!">
                     <Users size={18} /> Live Collaboration
                 </button>
-                <button className="menu-item" style={{opacity: 0.5}} title="Coming Soon!">
-                    <Sparkles size={18} /> AI Magic Generate
+                <button className="menu-item" onClick={async () => {
+                    const promptText = prompt("What would you like the AI to draw? (e.g. 'A red rectangle with the text Hello inside it')");
+                    if (promptText) {
+                        setIsOpen(false);
+                        const newShapes = await generateShapes(promptText);
+                        if (newShapes.length > 0) {
+                            // Inject the AI's mind directly into our store!
+                            updateShapes([...useStore.getState().shapes, ...newShapes]);
+                        }
+                    }
+                }}>
+                    <Sparkles size={18} color="#FFD700" /> <span style={{color: "#FFD700"}}>AI Magic Generate</span>
                 </button>
             </div>
 
