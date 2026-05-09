@@ -1,5 +1,5 @@
 import { Stage, Layer, Rect, Ellipse, Line ,Text,Arrow , Image as KonvaImage ,Transformer, Group, Path} from 'react-konva';
-import useStore, {awareness} from '../store';
+import useStore from '../store';
 import React, { useRef, useEffect } from 'react';
 
 // Upgraded component with built-in resizing!
@@ -57,7 +57,7 @@ const CustomImage = ({ shapeProps, isSelected, isDraggable, onSelect, onMouseEnt
 
 
 function Canvas() {
-    const { shapes, tool, color,strokeWidth, canvasBackground, selectedShape, setSelectedShape, updateShapes ,setTool,cursors} = useStore();
+    const { shapes, tool, color,strokeWidth, canvasBackground, selectedShape, setSelectedShape, updateShapes ,setTool,cursors, stagePos, setStagePos, fillStyle} = useStore();
     
     // We use a ref to track if the mouse is held down without causing useless re-renders
     const isDrawing = useRef(false);
@@ -114,10 +114,15 @@ function Canvas() {
 
     const handleMouseDown = (e) => {
         // If we click while in select mode, we don't want to draw a shape!
-        if (tool === "select" || tool === "eraser") return;
+        if (tool === "select" || tool === "eraser" || tool === "hand") return;
 
          // 👇 MOVED THIS LINE UP SO `pos` IS READY TO BE USED 👇
-        const pos = e.target.getStage().getPointerPosition();
+        const stage = e.target.getStage();
+        const pointerPosition = stage.getPointerPosition();
+        const pos = {
+            x: (pointerPosition.x - stage.x()) / stage.scaleX(),
+            y: (pointerPosition.y - stage.y()) / stage.scaleY()
+        };
                 if (tool === "text") {
             const textValue = prompt("What do you want to type?");
             if (textValue) {
@@ -148,7 +153,7 @@ function Canvas() {
             width: 0,   
             height: 0,
             points: [pos.x, pos.y], // used for pen tool
-            fill: tool === "pen" ? "transparent" : color,
+            fill: tool === "pen" || tool === "line" || tool === "arrow" ? "transparent" : (fillStyle === "solid" ? color : fillStyle === "translucent" ? color + "33" : "transparent"),
             stroke: color, // We save the color as the stroke too!
          strokeWidth: strokeWidth, // Save the thickness!
         };
@@ -158,13 +163,15 @@ function Canvas() {
 
     const handleMouseMove = (e) => {
         const stage = e.target.getStage();
-        const point = stage.getPointerPosition();
+        const pointerPosition = stage.getPointerPosition();
+        const point = {
+            x: (pointerPosition.x - stage.x()) / stage.scaleX(),
+            y: (pointerPosition.y - stage.y()) / stage.scaleY()
+        };
 
         // 👇 BROADCAST OUR MOUSE POSITION TO THE WORLD! 👇
-        awareness.setLocalStateField('user', {
-            ...awareness.getLocalState().user,
-            cursor: { x: point.x, y: point.y }
-        });
+        useStore.getState().updateCursorPosition(point.x, point.y);
+
 
         // If we aren't holding down the mouse, do nothing
         if (!isDrawing.current || tool === "select") return;
@@ -193,8 +200,14 @@ function Canvas() {
     return (
         <Stage
             ref={stageRef}
-
-
+            x={stagePos?.x || 0}
+            y={stagePos?.y || 0}
+            draggable={tool === "hand"}
+            onDragEnd={(e) => {
+                if (e.target === e.target.getStage()) {
+                    setStagePos({ x: e.target.x(), y: e.target.y() });
+                }
+            }}
             width={window.innerWidth}
             height={window.innerHeight}
             onMouseDown={handleMouseDown}
@@ -202,16 +215,16 @@ function Canvas() {
             onMouseUp={handleMouseUp}
             // Cut it off if they drag out of bounds
             onMouseLeave={handleMouseUp}
-            style={{ cursor: tool === "select" ? "default" : "crosshair" }}
+            style={{ cursor: tool === "hand" ? "grab" : tool === "select" ? "default" : "crosshair" }}
         >
             <Layer>
                     
                     {/* Add this rectangle first to act as a solid background for image exports! */}
                 <Rect
-                    x={0}
-                    y={0}
-                    width={window.innerWidth}
-                    height={window.innerHeight}
+                    x={-50000}
+                    y={-50000}
+                    width={100000}
+                    height={100000}
                     fill={canvasBackground}
                     listening={false} // Prevents us from accidentally selecting or interacting with it
                 />
@@ -222,9 +235,10 @@ function Canvas() {
                     
                     return (
                         <Group key={clientId} x={cursor.cursor.x} y={cursor.cursor.y}>
-                            {/* A cute little mouse pointer icon drawn with Konva Path */}
-                            <Path
-                                data="M0 0 L10 28 L15 17 L25 24 L29 20 L19 13 L28 10 Z"
+                            {/* A cute little circular mouse pointer */}
+                            <Ellipse
+                                radiusX={8}
+                                radiusY={8}
                                 fill={cursor.color}
                                 stroke="white"
                                 strokeWidth={2}
@@ -234,16 +248,16 @@ function Canvas() {
                             />
                             {/* The user's name badge */}
                             <Rect
-                                x={15}
-                                y={25}
+                                x={10}
+                                y={10}
                                 width={cursor.name.length * 8 + 10}
                                 height={20}
                                 fill={cursor.color}
                                 cornerRadius={4}
                             />
                             <Text
-                                x={20}
-                                y={29}
+                                x={15}
+                                y={14}
                                 text={cursor.name}
                                 fill="white"
                                 fontSize={12}

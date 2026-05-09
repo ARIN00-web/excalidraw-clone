@@ -1,8 +1,12 @@
 // src/ai.js
-export const generateShapes = async (prompt) => {
+export const generateShapes = async (prompt, stagePos = { x: 0, y: 0 }) => {
     // Vite uses import.meta.env to grab variables from your .env file securely!
-    const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${'AIzaSyBSn8-QV4L6Fju4-HzjmBwhP01ghwbzSjY'}`;
+    const apiKey = import.meta.env.VITE_GEMINI_API_KEY || 'AIzaSyD5Egizhwosg0e4L1envGCPJqnWoKFiH7I';
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+
+    // Calculate the center of the screen based on the current pan position!
+    const centerX = -stagePos.x + window.innerWidth / 2;
+    const centerY = -stagePos.y + window.innerHeight / 2;
 
     // We give Gemini a highly specific system prompt so it knows EXACTLY what to do
     const systemPrompt = `
@@ -16,7 +20,7 @@ export const generateShapes = async (prompt) => {
     - Lines/Arrows need: width, height
     - Text needs: text (string)
     
-    Make the drawing centered around x: 500, y: 300.
+    Make the drawing centered around x: ${Math.round(centerX)}, y: ${Math.round(centerY)}.
     `;
 
     try {
@@ -24,7 +28,10 @@ export const generateShapes = async (prompt) => {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-                contents: [{ role: "user", parts: [{ text: systemPrompt + "\n\nUser Request: " + prompt }] }]
+                contents: [{ role: "user", parts: [{ text: systemPrompt + "\n\nUser Request: " + prompt }] }],
+                generationConfig: {
+                    responseMimeType: "application/json",
+                }
             })
         });
 
@@ -47,6 +54,13 @@ export const generateShapes = async (prompt) => {
             resultText = resultText.replace(/^```json\n?/, "").replace(/```$/, "").trim();
         } else if (resultText.startsWith("```")) {
             resultText = resultText.replace(/^```\n?/, "").replace(/```$/, "").trim();
+        }
+
+        // Failsafe: extract only the array brackets if there's extra conversational text
+        const startIndex = resultText.indexOf('[');
+        const endIndex = resultText.lastIndexOf(']');
+        if (startIndex !== -1 && endIndex !== -1) {
+            resultText = resultText.substring(startIndex, endIndex + 1);
         }
         
         const shapes = JSON.parse(resultText);

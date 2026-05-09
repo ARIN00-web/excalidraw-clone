@@ -43,14 +43,19 @@ function MenuBar() {
                     <Trash2 size={18} color="#ff4a4a" /> <span style={{color: "#ff4a4a"}}>Clear Canvas</span>
                 </button>
                 <div className="menu-divider" />
-                <button className="menu-item" style={{opacity: 0.5}} title="Coming Soon!">
-                    <Users size={18} /> Live Collaboration
+                <button className="menu-item" onClick={() => {
+                    navigator.clipboard.writeText(window.location.href);
+                    alert("Room link copied! Share it with your friends.");
+                    setIsOpen(false);
+                }}>
+                    <Users size={18} /> Copy Invite Link
                 </button>
+
                 <button className="menu-item" onClick={async () => {
                     const promptText = prompt("What would you like the AI to draw? (e.g. 'A red rectangle with the text Hello inside it')");
                     if (promptText) {
                         setIsOpen(false);
-                        const newShapes = await generateShapes(promptText);
+                        const newShapes = await generateShapes(promptText, useStore.getState().stagePos);
                         if (newShapes.length > 0) {
                             // Inject the AI's mind directly into our store!
                             updateShapes([...useStore.getState().shapes, ...newShapes]);

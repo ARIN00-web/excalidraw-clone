@@ -1,12 +1,15 @@
 import React, {useRef} from "react";
 import useStore from "../store";
 import './Toolbar.css';
-import { MousePointer2, Square, Circle as CircleIcon, Pen, Undo2, Redo2,Eraser ,Type, Download,Diamond, ArrowUpRight ,Minus,Image as ImageIcon} from 'lucide-react';
+import { MousePointer2, Square, Circle as CircleIcon, Pen, Undo2, Redo2,Eraser ,Type, Download,Diamond, ArrowUpRight ,Minus,Image as ImageIcon, Hand} from 'lucide-react';
 function Toolbar() {
     const { tool, setTool, undo, redo } = useStore();
      const fileInputRef = useRef(null); //
     return (
         <div className="toolbar">
+            <button className={`tool-btn ${tool === "hand" ? "active" : ""}`} onClick={() => setTool("hand")} title="Pan Canvas">
+                <Hand size={20} />
+            </button>
             <button className={`tool-btn ${tool === "select" ? "active" : ""}`} onClick={() => setTool("select")} title="Select">
                 <MousePointer2 size={20} />
             </button>
