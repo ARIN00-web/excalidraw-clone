@@ -47,6 +47,7 @@ const useStore = create((set, get) => {
         selectedShape: null,
         strokeWidth: 2, 
         canvasBackground: "#121212", 
+        cursors: {}, // NEW: Store other users' cursors
         // --- 2. SIMPLE SETTERS ---
         // Notice how we use set() to update exactly one property without touching the others
         setTool: (newTool) => set({ tool: newTool }),
@@ -55,6 +56,7 @@ const useStore = create((set, get) => {
         setSelectedShape: (id) => set({ selectedShape: id }),
         setStrokeWidth: (width) => set({ strokeWidth: width }),
         setCanvasBackground: (bg) => set({ canvasBackground: bg }),
+        setCursors: (newCursors) => set({ cursors: newCursors }),
         // --- 3. COMPLEX LOGIC (Time Travel) ---
         undo: () => undoManager.undo(),
         redo: () => undoManager.redo(),
