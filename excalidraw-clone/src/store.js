@@ -46,8 +46,9 @@ const useStore = create((set, get) => {
             yShapes = ydoc.getArray("shapes");
             undoManager = new Y.UndoManager(yShapes);
 
+            const wsUrl = import.meta.env.VITE_WS_URL || `ws://${window.location.hostname}:1234`;
             provider = new WebsocketProvider(
-                `ws://${window.location.hostname}:1234`, 
+                wsUrl, 
                 roomId,      
                 ydoc
             );

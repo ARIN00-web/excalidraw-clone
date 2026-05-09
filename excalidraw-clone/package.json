@@ -7,6 +7,7 @@
     "dev": "vite",
     "dev:host": "vite --host",
     "yjs": "HOST=0.0.0.0 PORT=1234 npx y-websocket",
+    "start": "HOST=0.0.0.0 npx y-websocket",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview"
