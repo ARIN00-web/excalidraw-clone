@@ -1,5 +1,6 @@
 import React from 'react';
 import { Rect, Ellipse, Line, Text, Arrow, Image as KonvaImage, Transformer } from 'react-konva';
+import useStore from '../store';
 
 // Upgraded component with built-in resizing!
 const CustomImage = ({ shapeProps, isSelected, isDraggable, onSelect, onMouseEnter, onDragEnd, onTransformEnd }) => {
@@ -58,7 +59,10 @@ function ShapeRenderer({ shape, isSelected, tool, updateShapes, shapes, setSelec
     const isDraggable = tool === "select";
 
     const handleSelect = () => {
-        if (tool === "select") setSelectedShape(shape.id);
+        if (tool === "select") {
+            setSelectedShape(shape.id);
+            useStore.getState().setPropertyPanelVisible(true);
+        }
     };
 
     const deleteThisShape = () => {

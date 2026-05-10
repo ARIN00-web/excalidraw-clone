@@ -23,6 +23,7 @@ const useStore = create((set, get) => {
         strokeWidth: 2, 
         canvasBackground: "#121212", 
         cursors: {}, // NEW: Store other users' cursors
+        isPropertyPanelVisible: false,
         // --- 2. SIMPLE SETTERS ---
         // Notice how we use set() to update exactly one property without touching the others
         setStagePos: (pos) => set({ stagePos: pos }),
@@ -34,6 +35,7 @@ const useStore = create((set, get) => {
         setStrokeWidth: (width) => set({ strokeWidth: width }),
         setCanvasBackground: (bg) => set({ canvasBackground: bg }),
         setCursors: (newCursors) => set({ cursors: newCursors }),
+        setPropertyPanelVisible: (visible) => set({ isPropertyPanelVisible: visible }),
 
                 // --- 3. DYNAMIC CONNECTION ---
         connectToRoom: (roomId, user) => {

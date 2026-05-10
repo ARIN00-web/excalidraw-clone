@@ -5,7 +5,7 @@ import ShapeRenderer from './ShapeRenderer';
 import MultiplayerCursors from './MultiplayerCursors';
 
 function Canvas() {
-    const { shapes, tool, color,strokeWidth, canvasBackground, selectedShape, setSelectedShape, updateShapes ,setTool,cursors, stagePos, setStagePos, fillStyle} = useStore();
+    const { shapes, tool, color,strokeWidth, canvasBackground, selectedShape, setSelectedShape, updateShapes ,setTool,cursors, stagePos, setStagePos, fillStyle, setPropertyPanelVisible} = useStore();
     
     // We use a ref to track if the mouse is held down without causing useless re-renders
     const isDrawing = useRef(false);
@@ -61,6 +61,15 @@ function Canvas() {
 
 
     const handleMouseDown = (e) => {
+        // If clicking on the empty canvas, deselect shape and close panel
+        if (e.target === e.target.getStage()) {
+            setPropertyPanelVisible(false);
+            setSelectedShape(null);
+        } else if (tool !== "select" && tool !== "hand" && tool !== "eraser") {
+            // If starting to draw a new shape, hide property panel
+            setPropertyPanelVisible(false);
+        }
+
         // If we click while in select mode, we don't want to draw a shape!
         if (tool === "select" || tool === "eraser" || tool === "hand") return;
 

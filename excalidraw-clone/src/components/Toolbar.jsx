@@ -1,9 +1,9 @@
 import React, {useRef} from "react";
 import useStore from "../store";
 import './Toolbar.css';
-import { MousePointer2, Square, Circle as CircleIcon, Pen, Undo2, Redo2,Eraser ,Type, Download,Diamond, ArrowUpRight ,Minus,Image as ImageIcon, Hand} from 'lucide-react';
+import { MousePointer2, Square, Circle as CircleIcon, Pen, Undo2, Redo2,Eraser ,Type, Download,Diamond, ArrowUpRight ,Minus,Image as ImageIcon, Hand, Palette} from 'lucide-react';
 function Toolbar() {
-    const { tool, setTool, undo, redo } = useStore();
+    const { tool, setTool, undo, redo, isPropertyPanelVisible, setPropertyPanelVisible } = useStore();
      const fileInputRef = useRef(null); //
     return (
         <div className="toolbar">
@@ -37,6 +37,10 @@ function Toolbar() {
 
             <button className={`tool-btn ${tool === "text" ? "active" : ""}`} onClick={() => setTool("text")} title="Text">
                 <Type size={20} />
+            </button>
+            <div style={{ width: '1px', background: 'var(--ui-border)', margin: '0 4px' }} />
+            <button className={`tool-btn ${isPropertyPanelVisible ? "active" : ""}`} onClick={() => setPropertyPanelVisible(!isPropertyPanelVisible)} title="Toggle Properties">
+                <Palette size={20} />
             </button>
             <div style={{ width: '1px', background: 'var(--ui-border)', margin: '0 4px' }} />
             <button className="tool-btn" onClick={undo} title="Undo">
