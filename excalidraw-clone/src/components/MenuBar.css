@@ -82,3 +82,19 @@
     margin: 4px 0;
 }
 
+@media (max-width: 768px) {
+  .menu-bar-container {
+    bottom: auto;
+    top: 24px;
+    left: 16px;
+  }
+  .menu-dropdown {
+    bottom: auto;
+    top: calc(100% + 12px);
+    transform: translateY(-10px);
+  }
+  .menu-dropdown.open {
+    transform: translateY(0);
+  }
+}
+

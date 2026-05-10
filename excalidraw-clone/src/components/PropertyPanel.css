@@ -60,3 +60,14 @@
     background: var(--text-primary);
     border-radius: 2px;
 }
+
+@media (max-width: 768px) {
+    .property-panel {
+        top: 24px;
+        left: auto;
+        right: 16px;
+        transform: none;
+        width: auto;
+        padding: 12px;
+    }
+}

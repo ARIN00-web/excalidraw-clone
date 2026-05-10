@@ -161,6 +161,9 @@ function Canvas() {
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
+            onTouchStart={handleMouseDown}
+            onTouchMove={handleMouseMove}
+            onTouchEnd={handleMouseUp}
             // Cut it off if they drag out of bounds
             onMouseLeave={handleMouseUp}
             style={{ cursor: tool === "hand" ? "grab" : tool === "select" ? "default" : "crosshair" }}
